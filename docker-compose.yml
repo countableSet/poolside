@@ -5,7 +5,8 @@ services:
     image: envoyproxy/envoy:v1.14-latest
     restart: always
     volumes:
-      - ./envoy/config.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
     ports:
       - "80:10000" # entry
       - "9901:9901" # admin
+    network_mode: "host"

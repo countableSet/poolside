@@ -21,13 +21,13 @@ import (
 )
 
 var (
-	localhost = "127.0.0.1"
+	localhost = "0.0.0.0"
 	version   int32
 )
 
 func DemoData() v2cache.Snapshot {
 
-	var remoteHost = "localhost"
+	var remoteHost = "test-service"
 	var virtualHostName = "local_service"
 	var clusterName = "demo"
 	var listenerName = "demo_listener"

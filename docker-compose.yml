@@ -9,4 +9,10 @@ services:
     ports:
       - "80:10000" # entry
       - "9901:9901" # admin
-    network_mode: "host"
+  
+  margarita:
+    image: poolside/margarita:latest
+  
+  test-service:
+    image: python:3-alpine
+    command: python3 -m http.server 8000 --bind 0.0.0.0

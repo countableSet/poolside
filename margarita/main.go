@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/countableset/poolside/margarita/callbacks"
 	"github.com/countableset/poolside/margarita/server"
@@ -11,13 +15,26 @@ import (
 )
 
 func main() {
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	port := uint(8080)
-	cb, signal := callbacks.NewCallbacks()
+	cb, sig := callbacks.NewCallbacks()
 	ctx := context.Background()
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, nil)
 	srv := xds.NewServer(ctx, snapshotCache, cb)
 
 	go server.RunManagementServer(ctx, srv, port)
 
-	<-signal
+	<-sig
+
+	snap := server.DemoData()
+	snapshotCache.SetSnapshot(snapshotCache.GetStatusKeys()[0], snap)
+
+	<-done
+	log.Print("service stopped, shutting down...")
+
+	ctx.Done()
+
+	log.Print("service exited properly")
 }

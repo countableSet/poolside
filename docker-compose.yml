@@ -12,6 +12,8 @@ services:
   
   margarita:
     image: poolside/margarita:latest
+    volumes:
+      - ./margarita/properties.docker.yaml:/app/config.yaml
   
   test-service:
     image: python:3-alpine

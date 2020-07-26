@@ -16,7 +16,7 @@ import (
 const grpcMaxConcurrentStreams = 1000000
 
 // RunManagementServer starts an xDS server at the given port.
-func RunManagementServer(ctx context.Context, server xds.Server, port uint) {
+func RunManagementServer(ctx context.Context, server xds.Server, port uint32) {
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions, grpc.MaxConcurrentStreams(grpcMaxConcurrentStreams))
 	grpcServer := grpc.NewServer(grpcOptions...)

@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/countableset/poolside/margarita/config"
+
 	"github.com/countableset/poolside/margarita/callbacks"
 	"github.com/countableset/poolside/margarita/server"
 
@@ -17,8 +19,9 @@ import (
 func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	config.Load()
 
-	port := uint(8080)
+	port := config.GetXdsPort()
 	cb, sig := callbacks.NewCallbacks()
 	ctx := context.Background()
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, nil)

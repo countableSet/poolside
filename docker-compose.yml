@@ -6,6 +6,7 @@ services:
     restart: always
     volumes:
       - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/certs:/etc/envoy/certs
     ports:
       - "80:10000" # entry
       - "9901:9901" # admin

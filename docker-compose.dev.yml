@@ -6,4 +6,5 @@ services:
     restart: always
     volumes:
       - ./envoy/envoy.dev.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/certs:/etc/envoy/certs
     network_mode: "host"

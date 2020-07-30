@@ -28,6 +28,7 @@ func RunManagementServer(ctx context.Context, server xds.Server, port uint32) {
 
 	// register services
 	discovery.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
+	discovery.RegisterSecretDiscoveryServiceServer(grpcServer, server)
 	v2.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
 	v2.RegisterClusterDiscoveryServiceServer(grpcServer, server)
 	v2.RegisterRouteDiscoveryServiceServer(grpcServer, server)

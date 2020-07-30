@@ -9,6 +9,7 @@ import (
 	"github.com/countableset/poolside/margarita/config"
 
 	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
 	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	listener "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
 	route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
@@ -24,13 +25,14 @@ import (
 )
 
 var (
-	version int32
+	version  int32
+	tlsName  = "poolside.dev"
+	rootName = "poolside.dev"
 )
 
 // DemoData data used for testing
 func DemoData() v2cache.Snapshot {
-
-	var remoteHost = "test-service" // test-service
+	var remoteHost = "localhost" // test-service
 	var clusterName = "demo"
 	var listenerName = "demo_listener"
 	var routeName = "demo_route"
@@ -46,7 +48,9 @@ func DemoData() v2cache.Snapshot {
 
 	atomic.AddInt32(&version, 1)
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating snapshot Version %s", fmt.Sprint(version))
-	return v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, routes, listeners, nil)
+	out := v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, routes, listeners, nil)
+	out.Resources[cache.Secret] = v2cache.NewResources(fmt.Sprint(version), makeSecret(tlsName, rootName))
+	return out
 }
 
 func xdsSource() *core.ConfigSource {
@@ -136,6 +140,22 @@ func makeListener(listenerName string, route string) *v2.Listener {
 	if err != nil {
 		panic(err)
 	}
+	// tls
+	tlsc := &auth.DownstreamTlsContext{
+		CommonTlsContext: &auth.CommonTlsContext{
+			TlsCertificateSdsSecretConfigs: []*auth.SdsSecretConfig{{
+				Name:      tlsName,
+				SdsConfig: xdsSource(),
+			}},
+			ValidationContextType: &auth.CommonTlsContext_ValidationContextSdsSecretConfig{
+				ValidationContextSdsSecretConfig: &auth.SdsSecretConfig{
+					Name:      rootName,
+					SdsConfig: xdsSource(),
+				},
+			},
+		},
+	}
+	mt, _ := ptypes.MarshalAny(tlsc)
 	// listener
 	return &v2.Listener{
 		Name: listenerName,
@@ -157,6 +177,41 @@ func makeListener(listenerName string, route string) *v2.Listener {
 					TypedConfig: pbst,
 				},
 			}},
+			TransportSocket: &core.TransportSocket{
+				Name: wellknown.TransportSocketTls,
+				ConfigType: &core.TransportSocket_TypedConfig{
+					TypedConfig: mt,
+				},
+			},
 		}},
+	}
+}
+
+func makeSecret(tlsName, rootName string) []cache.Resource {
+	log.Printf(">>>>>>>>>>>>>>>>>>> creating secret")
+	return []cache.Resource{
+		&auth.Secret{
+			Name: tlsName,
+			Type: &auth.Secret_TlsCertificate{
+				TlsCertificate: &auth.TlsCertificate{
+					PrivateKey: &core.DataSource{
+						Specifier: &core.DataSource_Filename{Filename: "/etc/envoy/certs/key.pem"},
+					},
+					CertificateChain: &core.DataSource{
+						Specifier: &core.DataSource_Filename{Filename: "/etc/envoy/certs/cert.pem"},
+					},
+				},
+			},
+		},
+		// &auth.Secret{
+		// 	Name: rootName,
+		// 	Type: &auth.Secret_ValidationContext{
+		// 		ValidationContext: &auth.CertificateValidationContext{
+		// 			TrustedCa: &core.DataSource{
+		// 				Specifier: &core.DataSource_InlineBytes{InlineBytes: []byte(caBytes)},
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 }

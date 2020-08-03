@@ -203,15 +203,15 @@ func makeSecret(tlsName, rootName string) []cache.Resource {
 				},
 			},
 		},
-		// &auth.Secret{
-		// 	Name: rootName,
-		// 	Type: &auth.Secret_ValidationContext{
-		// 		ValidationContext: &auth.CertificateValidationContext{
-		// 			TrustedCa: &core.DataSource{
-		// 				Specifier: &core.DataSource_InlineBytes{InlineBytes: []byte(caBytes)},
-		// 			},
-		// 		},
-		// 	},
-		// },
+		//&auth.Secret{
+		//	Name: rootName,
+		//	Type: &auth.Secret_ValidationContext{
+		//		ValidationContext: &auth.CertificateValidationContext{
+		//			TrustedCa: &core.DataSource{
+		//				Specifier: &core.DataSource_Filename{Filename: "/etc/envoy/certs/ca.pem"},
+		//			},
+		//		},
+		//	},
+		//},
 	}
 }

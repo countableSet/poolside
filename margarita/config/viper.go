@@ -26,7 +26,7 @@ func Load() {
 func setDefaults() {
 	var configMap = map[string]interface{}{
 		"envoy.port": uint32(443),
-		"envoy.host": "127.0.0.1",
+		"envoy.host": "0.0.0.0",
 
 		"xds.port":    uint32(8080),
 		"xds.cluster": "xds_cluster",

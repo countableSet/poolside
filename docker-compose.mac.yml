@@ -4,20 +4,12 @@ services:
   envoy:
     image: envoyproxy/envoy:v1.14-latest
     restart: always
+    #command: ./docker-entrypoint.sh envoy -l debug -c /etc/envoy/envoy.yaml
     volumes:
-      - ./envoy/envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy/envoy.mac.yaml:/etc/envoy/envoy.yaml
       - ./envoy/certs/domain.crt:/etc/envoy/certs/cert.pem
       - ./envoy/certs/domain.key:/etc/envoy/certs/key.pem
       - ./envoy/certs/myCA.pem:/etc/envoy/certs/ca.pem
     ports:
       - "443:443" # entry
       - "9901:9901" # admin
-  
-  margarita:
-    image: poolside/margarita:latest
-    volumes:
-      - ./margarita/properties.docker.yaml:/app/config.yaml
-  
-  test-service:
-    image: python:3-alpine
-    command: python3 -m http.server 8000 --bind 0.0.0.0

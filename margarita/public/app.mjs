@@ -1,26 +1,19 @@
 import "https://cdnjs.cloudflare.com/ajax/libs/mithril/2.0.4/mithril.min.js";
 
 const Configurations = {
-  list: [
-    {
-      domain: "test.local.bimmer-tech.com",
-      proxy: "localhost:8000",
-    }, {
-      domain: "ui.local.bimmer-tech.com",
-      proxy: "localhost:9000",
-    },
-  ],
+  list: [],
   load: () => {
     return m.request({
       method: "GET",
       url: "http://localhost:3000/api/configurations",
-    }).then((result) => Configurations.list = result.data);
+    }).then((result) => Configurations.list = result);
   },
   save: () => {
     return m.request({
       method: "POST",
       url: "http://localhost:3000/api/configurations",
-    }).then((result) => Configurations.list = result.data);
+      body: Configurations.list,
+    }).then(() => console.log("saved"));
   },
   update: (index, field, value) => {
     Configurations.list[index][field] = value;
@@ -42,11 +35,12 @@ const App = {
 };
 
 const Form = {
+  onload: Configurations.load(),
   view: () => [
     m("form", {
       onsubmit: (e) => {
         e.preventDefault();
-        console.log("saving... todo");
+        Configurations.save();
       }
     }, [
       TextFieldList(Configurations.list),

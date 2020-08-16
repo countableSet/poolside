@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/countableset/poolside/margarita/api"
 	"log"
 	"os"
 	"os/signal"
@@ -22,17 +23,18 @@ func main() {
 	config.Load()
 
 	port := config.GetXdsPort()
-	cb, sig := callbacks.NewCallbacks()
+	cb, _ := callbacks.NewCallbacks()
 	ctx := context.Background()
 	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, nil)
 	srv := xds.NewServer(ctx, snapshotCache, cb)
 
+	go api.RunApiServer()
 	go server.RunManagementServer(ctx, srv, port)
 
-	<-sig
+	//<-sig
 
 	snap := server.DemoData()
-	snapshotCache.SetSnapshot(snapshotCache.GetStatusKeys()[0], snap)
+	snapshotCache.SetSnapshot("id_1", snap)
 
 	<-done
 	log.Print("service stopped, shutting down...")

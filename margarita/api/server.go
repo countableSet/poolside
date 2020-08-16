@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+var configs = readFromFile()
+
 func RunApiServer() {
 	http.Handle("/", http.FileServer(http.Dir("./public")))
 	http.HandleFunc("/api/configurations", func(w http.ResponseWriter, r *http.Request) {
@@ -24,23 +26,21 @@ func RunApiServer() {
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
-	// sample data for now
 	w.Header().Set("Content-Type", "application/json")
-	payload := []Configuration{
-		{Domain: "test.local.bimmer-tech.com", Proxy: "localhost:8000"},
-	}
-	_ = json.NewEncoder(w).Encode(payload)
+	_ = json.NewEncoder(w).Encode(configs)
 }
 
 func handlePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	decoder := json.NewDecoder(r.Body)
-	var c []Configuration
+	var c []configuration
 	if err := decoder.Decode(&c); err != nil {
 		log.Printf("error decoding request body %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	log.Printf("%v", c)
+	log.Printf("Decoded and write back to file: %v", c)
+	configs = c
+	writeToFile(&c)
 	w.WriteHeader(http.StatusCreated)
 }

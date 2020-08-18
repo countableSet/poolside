@@ -25,7 +25,7 @@ const Configurations = {
 
 const App = {
   view: () => [
-    m("main", [
+    m("main", {class: "container"}, [
       m("h1", "Poolside Development"),
       m("hr"),
       m("h3", "Configurations"),
@@ -52,11 +52,16 @@ const Form = {
 
 const TextFieldList = (list) =>
   list.map((item, index) => {
-    return m("div", [
-      TextField("Domain", "example.com", "domain", index, item.domain),
-      TextField("Proxy", "localhost:8080", "proxy", index, item.proxy),
-      m("button", {type: "button", onclick: () => Configurations.remove(index)}, "Remove"),
-      m("br"), m("br"),
+    return m("div", {class: "row"}, [
+      m("div", {class: "column"}, [
+        TextField("Domain", "example.com", "domain", index, item.domain),
+      ]),
+      m("div", {class: "column"}, [
+        TextField("Proxy", "localhost:8080", "proxy", index, item.proxy),
+      ]),
+      m("div", {class: "column column-10", style: "margin: auto;text-align: center;padding-top:25px;"}, [
+        m("button", {type: "button", onclick: () => Configurations.remove(index)}, "Remove"),
+      ]),
     ]);
   });
 
@@ -76,13 +81,16 @@ const TextField = (label, placeholder, field, index, value) =>
 
 const AddButton = {
   view: () => [
-    m("button", {
-      type: "button",
-      onclick: () => {
-        Configurations.list.push({});
-      },
-    }, "Add"),
-    m("br")
+    m("div", {style: "text-align: center;"}, [
+      m("button", {
+        type: "button",
+        class: "button-outline",
+        onclick: () => {
+          Configurations.list.push({});
+        },
+      }, "Add"),
+      m("br"),
+    ])
   ]
 };
 

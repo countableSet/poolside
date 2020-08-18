@@ -30,11 +30,7 @@ func main() {
 
 	go api.RunApiServer()
 	go server.RunManagementServer(ctx, srv, port)
-
-	//<-sig
-
-	snap := server.DemoData()
-	snapshotCache.SetSnapshot("id_1", snap)
+	go server.ListenForConfigurationChanges(snapshotCache)
 
 	<-done
 	log.Print("service stopped, shutting down...")

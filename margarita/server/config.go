@@ -2,7 +2,10 @@ package server
 
 import (
 	"fmt"
+	"github.com/countableset/poolside/margarita/api"
 	"log"
+	url2 "net/url"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -27,29 +30,50 @@ import (
 var (
 	version  int32
 	tlsName  = "poolside.dev"
-	rootName = "poolside.dev"
 )
 
-// DemoData data used for testing
-func DemoData() v2cache.Snapshot {
-	var remoteHost = "localhost" // test-service
-	var clusterName = "demo"
-	var listenerName = "demo_listener"
-	var routeName = "demo_route"
+// ListenForConfigurationChanges listens and applies changes to cache
+func ListenForConfigurationChanges(cache v2cache.SnapshotCache) {
+	for configs := range api.ConfigUpdateChan {
+		snap := CreateNewSnapShot(configs)
+		cache.SetSnapshot("id_1", snap)
+	}
+}
 
-	clusters := make([]cache.Resource, 1)
-	clusters[0] = makeCluster(clusterName, remoteHost, uint32(8000))
+// CreateNewSnapShot data used for xDS service
+func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
+	size := len(configs)
+	clusters := make([]cache.Resource, size)
+	routes := make([]cache.Resource, size)
+	listeners := make([]cache.Resource, size)
 
-	routes := make([]cache.Resource, 1)
-	routes[0] = makeRoute(routeName, clusterName, "test.local.bimmer-tech.com")
+	for i, c := range configs {
+		u, err := url2.Parse(c.Proxy)
+		if err != nil {
+			log.Printf("Invalid proxy url parsing %s %v", c.Proxy, err)
+			continue
+		}
+		remoteHost := u.Hostname()
+		port, err := strconv.ParseUint(u.Port(), 10, 32)
+		if err != nil {
+			log.Printf("Invaild port parsing from url %s %v", c.Proxy, err)
+			continue
+		}
+		domain := c.Domain
+		slug := Clean(c.Proxy)
+		clusterName := "cluster_" + slug
+		listenerName := "listener_" + slug
+		routeName := "route_" + slug
 
-	listeners := make([]cache.Resource, 1)
-	listeners[0] = makeListener(listenerName, routeName)
+		clusters[i] = makeCluster(clusterName, remoteHost, uint32(port))
+		routes[i] = makeRoute(routeName, clusterName, domain)
+		listeners[i] = makeListener(listenerName, routeName)
+	}
 
 	atomic.AddInt32(&version, 1)
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating snapshot Version %s", fmt.Sprint(version))
 	out := v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, routes, listeners, nil)
-	out.Resources[cache.Secret] = v2cache.NewResources(fmt.Sprint(version), makeSecret(tlsName, rootName))
+	out.Resources[cache.Secret] = v2cache.NewResources(fmt.Sprint(version), makeSecret(tlsName))
 	return out
 }
 
@@ -90,7 +114,7 @@ func makeCluster(clusterName, hostname string, port uint32) *v2.Cluster {
 		ClusterDiscoveryType: &v2.Cluster_Type{Type: v2.Cluster_LOGICAL_DNS},
 		DnsLookupFamily:      v2.Cluster_V4_ONLY,
 		LbPolicy:             v2.Cluster_ROUND_ROBIN,
-		Hosts:                []*core.Address{h},
+		Hosts:                []*core.Address{h}, // TODO need to fix deprecation warning
 	}
 }
 
@@ -149,7 +173,7 @@ func makeListener(listenerName string, route string) *v2.Listener {
 			}},
 			ValidationContextType: &auth.CommonTlsContext_ValidationContextSdsSecretConfig{
 				ValidationContextSdsSecretConfig: &auth.SdsSecretConfig{
-					Name:      rootName,
+					Name:      tlsName,
 					SdsConfig: xdsSource(),
 				},
 			},
@@ -187,7 +211,7 @@ func makeListener(listenerName string, route string) *v2.Listener {
 	}
 }
 
-func makeSecret(tlsName, rootName string) []cache.Resource {
+func makeSecret(tlsName string) []cache.Resource {
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating secret")
 	return []cache.Resource{
 		&auth.Secret{
@@ -203,15 +227,5 @@ func makeSecret(tlsName, rootName string) []cache.Resource {
 				},
 			},
 		},
-		//&auth.Secret{
-		//	Name: rootName,
-		//	Type: &auth.Secret_ValidationContext{
-		//		ValidationContext: &auth.CertificateValidationContext{
-		//			TrustedCa: &core.DataSource{
-		//				Specifier: &core.DataSource_Filename{Filename: "/etc/envoy/certs/ca.pem"},
-		//			},
-		//		},
-		//	},
-		//},
 	}
 }

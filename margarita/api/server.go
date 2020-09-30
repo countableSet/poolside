@@ -2,8 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/countableset/poolside/margarita/config"
 )
 
 var configs = readFromFile()
@@ -22,8 +25,10 @@ func RunApiServer() {
 		}
 	})
 
-	log.Printf("api server listening %d", 3000)
-	http.ListenAndServe(":3000", nil)
+	host := config.GetMargaritaHost()
+	port := config.GetMargaritaPort()
+	log.Printf("api server listening %s:%d", host, port)
+	http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
 }
 
 func handleGet(w http.ResponseWriter) {

@@ -1,9 +1,10 @@
-FROM golang:1.14-alpine as build
+FROM golang:1.14 as build
 WORKDIR /app/
 COPY ./ .
 RUN GOOS=linux go build -o app .
 
-FROM alpine:latest
+FROM ubuntu:20.04
 WORKDIR /app/
 COPY --from=build /app/app .
+COPY --from=build /app/public/* public/
 CMD ["./app"]

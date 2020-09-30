@@ -28,7 +28,10 @@ func setDefaults() {
 		"envoy.port": uint32(443),
 		"envoy.host": "0.0.0.0",
 
-		"xds.port":    uint32(8080),
+		"margarita.host": "0.0.0.0",
+		"margarita.port": uint32(10010),
+
+		"xds.port":    uint32(10020),
 		"xds.cluster": "xds_cluster",
 	}
 	for key, value := range configMap {
@@ -44,6 +47,16 @@ func GetEnvoyPort() uint32 {
 // GetEnvoyHost host
 func GetEnvoyHost() string {
 	return viper.GetString("envoy.host")
+}
+
+// GetMargaritaHost host
+func GetMargaritaHost() string {
+	return viper.GetString("margarita.host")
+}
+
+// GetMargaritaPort port
+func GetMargaritaPort() uint32 {
+	return viper.GetUint32("margarita.port")
 }
 
 // GetXdsPort port

@@ -56,7 +56,7 @@ func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
 		remoteHost := u.Hostname()
 		port, err := strconv.ParseUint(u.Port(), 10, 32)
 		if err != nil {
-			log.Printf("Invaild port parsing from url %s %v", c.Proxy, err)
+			log.Printf("Invalid port parsing from url %s %v", c.Proxy, err)
 			continue
 		}
 		domain := c.Domain

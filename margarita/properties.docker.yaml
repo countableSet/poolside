@@ -1,6 +1,8 @@
 envoy:
   port: 10000
   host: "0.0.0.0"
+margarita:
+  port: 10010
 xds:
-  port: 8080
+  port: 10020
   cluster: "xds_cluster"

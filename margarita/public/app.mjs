@@ -5,13 +5,13 @@ const Configurations = {
   load: () => {
     return m.request({
       method: "GET",
-      url: "http://localhost:3000/api/configurations",
+      url: "http://localhost:10010/api/configurations",
     }).then((result) => Configurations.list = result);
   },
   save: () => {
     return m.request({
       method: "POST",
-      url: "http://localhost:3000/api/configurations",
+      url: "http://localhost:10010/api/configurations",
       body: Configurations.list,
     }).then(() => console.log("saved"));
   },

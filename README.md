@@ -8,5 +8,5 @@ Configurable auto-reload proxy to put services behind domain names for better co
 * Running test server `make test-server`
 * Running margarita `go run main.go`
 * Sample config file `[{"domain":"test.local.bimmer-tech.com","proxy":"http://host.docker.internal:8000"}]`
-* Default ui endpoint http://localhost:3000/
+* Default ui endpoint http://localhost:10010/
 * Envoy admin endpoint http://localhost:9901/

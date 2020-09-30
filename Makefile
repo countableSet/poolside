@@ -1,6 +1,3 @@
-build:
-	cd margarita && docker build -t poolside/margarita:latest .
-
 dev:
 	docker-compose -f docker-compose.mac.yml up
 

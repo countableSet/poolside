@@ -22,4 +22,4 @@ run:
 	-p 443:443 \
 	-p 9901:9901 \
 	-p 10010:10010 \
-	poolside:latest
+	ghcr.io/countableset/poolside:latest

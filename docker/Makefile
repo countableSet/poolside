@@ -1,5 +1,10 @@
 default: margarita
-	docker build -t poolside:latest .
+	docker build \
+	--label org.opencontainers.image.source=https://github.com/countableset/poolside \
+	-t ghcr.io/countableset/poolside:latest .
+
+push:
+	docker push ghcr.io/countableset/poolside:latest
 
 margarita:
 	cd ../margarita && make

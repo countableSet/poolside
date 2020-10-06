@@ -49,8 +49,9 @@ func ListenForConfigurationChanges(cache v2cache.SnapshotCache) {
 func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
 	size := len(configs)
 	clusters := make([]cache.Resource, size)
-	routes := make([]cache.Resource, size)
-	listeners := make([]cache.Resource, size)
+	routes := make([]*route.VirtualHost, size)
+	route := make([]cache.Resource, 1)
+	listeners := make([]cache.Resource, 1)
 
 	for i, c := range configs {
 		if !strings.Contains(c.Proxy, "://") {
@@ -70,17 +71,19 @@ func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
 		domain := c.Domain
 		slug := Clean(c.Proxy)
 		clusterName := "cluster_" + slug
-		listenerName := "listener_" + slug
 		routeName := "route_" + slug
 
 		clusters[i] = makeCluster(clusterName, remoteHost, uint32(port))
-		routes[i] = makeRoute(routeName, clusterName, domain)
-		listeners[i] = makeListener(listenerName, routeName)
+		routes[i] = makeVHostRoute(routeName, clusterName, domain)
 	}
+	listenerName := "listener_https"
+	routeName := "route_rds"
+	route[0] = makeRoute(routeName, routes)
+	listeners[0] = makeListener(listenerName, routeName)
 
 	atomic.AddInt32(&version, 1)
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating snapshot Version %s", fmt.Sprint(version))
-	out := v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, routes, listeners, nil)
+	out := v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, route, listeners, nil)
 	out.Resources[cache.Secret] = v2cache.NewResources(fmt.Sprint(version), makeSecret(tlsName))
 	return out
 }
@@ -126,28 +129,33 @@ func makeCluster(clusterName, hostname string, port uint32) *v2.Cluster {
 	}
 }
 
-func makeRoute(routeName, clusterName, domain string) *v2.RouteConfiguration {
-	log.Printf(">>>>>>>>>>>>>>>>>>> creating route %s %s %s", routeName, clusterName, domain)
+func makeVHostRoute(routeName, clusterName, domain string) *route.VirtualHost {
+	log.Printf(">>>>>>>>>>>>>>>>>>> creating vhost route %s %s %s", routeName, clusterName, domain)
+	return &route.VirtualHost{
+		Name:    routeName,
+		Domains: []string{domain},
+		Routes: []*route.Route{{
+			Match: &route.RouteMatch{
+				PathSpecifier: &route.RouteMatch_SafeRegex{
+					SafeRegex: &matcher.RegexMatcher{EngineType: &matcher.RegexMatcher_GoogleRe2{}, Regex: ".*"},
+				},
+			},
+			Action: &route.Route_Route{
+				Route: &route.RouteAction{
+					ClusterSpecifier: &route.RouteAction_Cluster{
+						Cluster: clusterName,
+					},
+				},
+			},
+		}},
+	}
+}
+
+func makeRoute(routeName string, vhosts []*route.VirtualHost) *v2.RouteConfiguration {
+	log.Printf(">>>>>>>>>>>>>>>>>>> creating route %s", routeName)
 	return &v2.RouteConfiguration{
 		Name: routeName,
-		VirtualHosts: []*route.VirtualHost{{
-			Name:    routeName,
-			Domains: []string{domain},
-			Routes: []*route.Route{{
-				Match: &route.RouteMatch{
-					PathSpecifier: &route.RouteMatch_SafeRegex{
-						SafeRegex: &matcher.RegexMatcher{EngineType: &matcher.RegexMatcher_GoogleRe2{}, Regex: ".*"},
-					},
-				},
-				Action: &route.Route_Route{
-					Route: &route.RouteAction{
-						ClusterSpecifier: &route.RouteAction_Cluster{
-							Cluster: clusterName,
-						},
-					},
-				},
-			}},
-		}},
+		VirtualHosts: vhosts,
 	}
 }
 

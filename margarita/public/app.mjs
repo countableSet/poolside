@@ -1,17 +1,19 @@
 import "https://cdnjs.cloudflare.com/ajax/libs/mithril/2.0.4/mithril.min.js";
 
+const hostname = window.location.href;
+
 const Configurations = {
   list: [],
   load: () => {
     return m.request({
       method: "GET",
-      url: "http://localhost:10010/api/configurations",
+      url: `${hostname}api/configurations`,
     }).then((result) => Configurations.list = result);
   },
   save: () => {
     return m.request({
       method: "POST",
-      url: "http://localhost:10010/api/configurations",
+      url: `${hostname}api/configurations`,
       body: Configurations.list,
     }).then(() => console.log("saved"));
   },
@@ -54,10 +56,10 @@ const TextFieldList = (list) =>
   list.map((item, index) => {
     return m("div", {class: "row"}, [
       m("div", {class: "column"}, [
-        TextField("Domain", "example.com", "domain", index, item.domain),
+        TextField("Domain", "test.poolside.dev", "domain", index, item.domain),
       ]),
       m("div", {class: "column"}, [
-        TextField("Proxy", "localhost:8080", "proxy", index, item.proxy),
+        TextField("Proxy", "http://localhost:8080", "proxy", index, item.proxy),
       ]),
       m("div", {class: "column column-10", style: "margin: auto;text-align: center;padding-top:25px;"}, [
         m("button", {type: "button", onclick: () => Configurations.remove(index)}, "Remove"),

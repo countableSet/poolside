@@ -2,7 +2,7 @@
 
 Configurable auto-reload proxy to put services behind domain names for better cookie management.
 
-#### getting started
+### getting started
 
 ```
 docker pull ghcr.io/countableset/poolside:latest
@@ -18,7 +18,7 @@ docker run \
 	ghcr.io/countableset/poolside:latest
 ```
 
-Open [http://localhost:10010](http://localhost:10010) for configuration ui.
+Open [https://margarita.poolside.dev](https://margarita.poolside.dev) for configuration ui.
 
 Connect to docker-compose containers to the poolside network to allow for forwarding:
 ```
@@ -32,3 +32,9 @@ Connect standalone container to the poolside network to allow for forwarding:
 ```
 --network=poolside-network
 ```
+
+### trusting certifications for hsts
+
+Safari: MacOS -> Keychain Access -> Login -> Add Certificate -> Double click cert, under trust, trust all
+
+Firefox: Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file

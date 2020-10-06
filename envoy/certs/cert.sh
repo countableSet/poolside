@@ -6,7 +6,7 @@ openssl genrsa -out domain.key 4096
 
 # create csr?
 openssl req -new -key domain.key -out domain.csr \
-    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.local.bimmer-tech.com"
+    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
 
 # cert certificate
 openssl x509 -req -in domain.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \

@@ -6,6 +6,7 @@ import (
 	"log"
 	url2 "net/url"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -35,6 +36,10 @@ var (
 // ListenForConfigurationChanges listens and applies changes to cache
 func ListenForConfigurationChanges(cache v2cache.SnapshotCache) {
 	for configs := range api.ConfigUpdateChan {
+		configs = append(configs, api.Configuration{
+			Domain: config.GetMargaritaDomain(),
+			Proxy:  fmt.Sprintf("http://%s:%d", config.GetMargaritaHost(), config.GetMargaritaPort()),
+		})
 		snap := CreateNewSnapShot(configs)
 		cache.SetSnapshot("id_1", snap)
 	}
@@ -48,6 +53,9 @@ func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
 	listeners := make([]cache.Resource, size)
 
 	for i, c := range configs {
+		if !strings.Contains(c.Proxy, "://") {
+			c.Proxy = fmt.Sprintf("http://%s", c.Proxy)
+		}
 		u, err := url2.Parse(c.Proxy)
 		if err != nil {
 			log.Printf("Invalid proxy url parsing %s %v", c.Proxy, err)

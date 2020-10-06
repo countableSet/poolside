@@ -3,6 +3,7 @@ set -e
 
 cert_filename="/etc/envoy/certs/cert.pem"
 key_filename="/etc/envoy/certs/key.pem"
+ca_filename="/etc/envoy/certs/ca.pem"
 # Generate certificates if none are mounted needed
 if [ ! -f "$cert_filename" ] || [ ! -f "$key_filename" ]; then
   set -x
@@ -11,7 +12,7 @@ if [ ! -f "$cert_filename" ] || [ ! -f "$key_filename" ]; then
   # generate root ca private key
   openssl genrsa -out myCA.key 2048
   # generate root certificate
-  openssl req -x509 -new -nodes -key myCA.key -sha256 -days 356 -out myCA.pem \
+  openssl req -x509 -new -nodes -key myCA.key -sha256 -days 356 -out $ca_filename \
     -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
   # generate private key for domain
   openssl genrsa -out $key_filename 4096
@@ -19,7 +20,7 @@ if [ ! -f "$cert_filename" ] || [ ! -f "$key_filename" ]; then
   openssl req -new -key $key_filename -out domain.csr \
     -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
   # cert certificate
-  openssl x509 -req -in domain.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \
+  openssl x509 -req -in domain.csr -CA $ca_filename -CAkey myCA.key -CAcreateserial \
     -out $cert_filename -days 365 -sha256 -extfile domain.ext
   set +x
 fi

@@ -28,6 +28,7 @@ func setDefaults() {
 		"envoy.port": uint32(443),
 		"envoy.host": "0.0.0.0",
 
+		"margarita.domain": "margarita.poolside.dev",
 		"margarita.host": "0.0.0.0",
 		"margarita.port": uint32(10010),
 
@@ -39,32 +40,45 @@ func setDefaults() {
 	}
 }
 
-// GetEnvoyPort port
-func GetEnvoyPort() uint32 {
-	return viper.GetUint32("envoy.port")
-}
-
-// GetEnvoyHost host
+// GetEnvoyHost the host envoy should listen on to receive requests from the outside
+// Default to 0.0.0.0 to listen on all interfaces in the docker container
 func GetEnvoyHost() string {
 	return viper.GetString("envoy.host")
 }
 
-// GetMargaritaHost host
+// GetEnvoyPort the port number envoy should listen on to receive requests from the outside
+// Default to 443 for https connections
+func GetEnvoyPort() uint32 {
+	return viper.GetUint32("envoy.port")
+}
+
+// GetMargaritaDomain the domain name margarita should be configured with inside envoy to have
+// a nice url to access it from
+// Default is margarita.poolside.dev
+func GetMargaritaDomain() string {
+	return viper.GetString("margarita.domain")
+}
+
+// GetMargaritaHost the host the margarita service ui should listen on
+// Default to 0.0.0.0 to listen on all interfaces in the docker container
 func GetMargaritaHost() string {
 	return viper.GetString("margarita.host")
 }
 
-// GetMargaritaPort port
+// GetMargaritaPort the port number the margarita service ui should listen on
+// Default to 10010
 func GetMargaritaPort() uint32 {
 	return viper.GetUint32("margarita.port")
 }
 
-// GetXdsPort port
-func GetXdsPort() uint32 {
-	return viper.GetUint32("xds.port")
-}
-
-// GetXdsCluster cluster
+// GetXdsCluster the cluster name given to envoy
+// Default is xds_cluster
 func GetXdsCluster() string {
 	return viper.GetString("xds.cluster")
+}
+
+// GetXdsPort the grpc port that envoy will connect to for configurations
+// Default is 10020
+func GetXdsPort() uint32 {
+	return viper.GetUint32("xds.port")
 }

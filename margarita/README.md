@@ -4,7 +4,7 @@ Configuration file format:
 ```
 [
     {
-        "domain":"test.local.bimmer-tech.com",
+        "domain":"test.poolside.dev",
         "proxy":"http://host.docker.internal:8000"
     }
 ]

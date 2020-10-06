@@ -1,6 +1,29 @@
 #!/usr/bin/env sh
 set -e
 
+cert_filename="/etc/envoy/certs/cert.pem"
+key_filename="/etc/envoy/certs/key.pem"
+# Generate certificates if none are mounted needed
+if [ ! -f "$cert_filename" ] || [ ! -f "$key_filename" ]; then
+  set -x
+  mkdir -p /etc/envoy/certs
+  touch domain.ext
+  # generate root ca private key
+  openssl genrsa -out myCA.key 2048
+  # generate root certificate
+  openssl req -x509 -new -nodes -key myCA.key -sha256 -days 356 -out myCA.pem \
+    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
+  # generate private key for domain
+  openssl genrsa -out $key_filename 4096
+  # create csr?
+  openssl req -new -key $key_filename -out domain.csr \
+    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
+  # cert certificate
+  openssl x509 -req -in domain.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \
+    -out $cert_filename -days 365 -sha256 -extfile domain.ext
+  set +x
+fi
+
 # Start the first process (envoy)
 ./docker-entrypoint.sh /usr/local/bin/envoy -c /etc/envoy/envoy.yaml &
 status=$?
@@ -19,13 +42,13 @@ if [ $status -ne 0 ]; then
   exit $status
 fi
 
-# Naive check runs checks once a minute to see if either of the processes exited.
-# This illustrates part of the heavy lifting you need to do if you want to run
-# more than one service in a container. The container exits with an error
-# if it detects that either of the processes has exited.
-# Otherwise it loops forever, waking up every 60 seconds
+# Naive check runs checks once every 30 seconds to see if either of the 
+# processes exited. This illustrates part of the heavy lifting you need 
+# to do if you want to run more than one service in a container. The 
+# container exits with an error if it detects that either of the processes 
+# has exited. Otherwise it loops forever, waking up every 30 seconds.
 
-while sleep 60; do
+while sleep 30; do
   pgrep -a envoy
   PROCESS_1_STATUS=$?
   pgrep -a app

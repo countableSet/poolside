@@ -1,6 +1,11 @@
+COMMIT_HASH=$(shell git rev-parse HEAD 2>/dev/null)
+BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD)
+
 default: margarita
 	docker build \
 	--label org.opencontainers.image.source=https://github.com/countableset/poolside \
+	--label git.branch=${BRANCH_NAME} \
+	--label git.sha=${COMMIT_HASH} \
 	-t ghcr.io/countableset/poolside:latest .
 
 push:

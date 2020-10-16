@@ -1,5 +1,6 @@
-// https://github.com/stvp/slug
 package server
+
+// Reference https://github.com/stvp/slug
 
 import (
 	"unicode"
@@ -8,7 +9,7 @@ import (
 )
 
 var (
-	// Replace non-alphanumeric characters with this byte.
+	// Replacement non-alphanumeric characters with this byte.
 	Replacement = '_'
 
 	// The "safe" set of characters.
@@ -29,7 +30,7 @@ var (
 	}
 )
 
-// Slug replaces each run of characters which are not ASCII letters or numbers
+// Clean slug replaces each run of characters which are not ASCII letters or numbers
 // with the Replacement character, except for leading or trailing runs. Letters
 // will be stripped of diacritical marks and lowercased. Letter or number
 // codepoints that do not have combining marks or a lower-cased variant will be

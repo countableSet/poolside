@@ -4,24 +4,29 @@ set -e
 cert_filename="/etc/envoy/certs/cert.pem"
 key_filename="/etc/envoy/certs/key.pem"
 ca_filename="/etc/envoy/certs/ca.pem"
+ca_key_filename="/etc/envoy/certs/ca.key"
+domain_filename="/etc/envoy/certs/domain.ext"
 # Generate certificates if none are mounted needed
 if [ ! -f "$cert_filename" ] || [ ! -f "$key_filename" ]; then
   set -x
-  mkdir -p /etc/envoy/certs
-  touch domain.ext
-  # generate root ca private key
-  openssl genrsa -out myCA.key 2048
-  # generate root certificate
-  openssl req -x509 -new -nodes -key myCA.key -sha256 -days 356 -out $ca_filename \
-    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
+  if [ ! -f "$domain_filename" ]; then
+    echo "authorityKeyIdentifier=keyid,issuer\nbasicConstraints=CA:FALSE\nkeyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment\nsubjectAltName = @alt_names\n\n[alt_names]\nDNS.1 = *.poolside.dev" > $domain_filename
+  fi
+  if [ ! -f "$ca_filename" ] || [ ! -f "$ca_key_filename"]; then
+    # generate root ca private key
+    openssl genrsa -out $ca_key_filename 2048
+    # generate root certificate
+    openssl req -x509 -new -nodes -key $ca_key_filename -sha256 -days 356 -out $ca_filename \
+      -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=poolside.dev"
+  fi
   # generate private key for domain
   openssl genrsa -out $key_filename 4096
   # create csr?
   openssl req -new -key $key_filename -out domain.csr \
-    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=*.poolside.dev"
+    -subj "/C=US/ST=California/L=AnyCity/O=Poolside/OU=Org/CN=poolside.dev"
   # cert certificate
-  openssl x509 -req -in domain.csr -CA $ca_filename -CAkey myCA.key -CAcreateserial \
-    -out $cert_filename -days 365 -sha256 -extfile domain.ext
+  openssl x509 -req -in domain.csr -CA $ca_filename -CAkey $ca_key_filename -CAcreateserial \
+    -out $cert_filename -days 365 -sha256 -extfile $domain_filename
   set +x
 fi
 

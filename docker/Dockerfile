@@ -12,7 +12,7 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/envoy
+RUN mkdir -p /etc/envoy/certs
 COPY --from=envoy /usr/local/bin/envoy /usr/local/bin/envoy
 COPY --from=envoy /docker-entrypoint.sh /docker-entrypoint.sh
 
@@ -22,5 +22,6 @@ COPY --from=margarita /app/public/* /xds/public/
 
 COPY start.sh /
 COPY envoy.yaml /etc/envoy/envoy.yaml
+COPY config.json /xds/config.json
 
 CMD ["./start.sh"]

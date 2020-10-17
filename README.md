@@ -7,7 +7,7 @@ Configurable auto-reload proxy to put services behind domain names for better co
 ```
 docker pull ghcr.io/countableset/poolside:latest
 docker network create --driver=bridge poolside-network
-docker run \
+docker run -d \
 	--name=poolside \
 	--network=poolside-network \
 	-v $HOME/.poolside/certs/:/etc/envoy/certs/ \
@@ -35,6 +35,6 @@ Connect standalone container to the poolside network to allow for forwarding:
 
 ### trusting certifications for hsts
 
-Safari: MacOS -> Keychain Access -> Login -> Add Certificate -> Double click cert, under trust, trust all
+Safari/Chrome: MacOS -> Keychain Access -> Login -> Add Certificate -> Double click cert, under trust, trust all
 
-Firefox: Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file
+Firefox: Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file (Press `Cmd + Shift + .` to show hidden files)

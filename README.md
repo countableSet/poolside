@@ -35,6 +35,11 @@ Connect standalone container to the poolside network to allow for forwarding:
 
 ### trusting certifications for hsts
 
-Safari/Chrome: MacOS -> Keychain Access -> Login -> Add Certificate -> Double click cert, under trust, trust all
+Safari/Chrome: 
 
-Firefox: Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file (Press `Cmd + Shift + .` to show hidden files)
+- MacOS -> Keychain Access -> Login -> Add Certificate -> Double click cert, under trust, trust all
+
+Firefox: 
+
+- Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file (Press `Cmd + Shift + .` to show hidden files)
+- Use keychain certificates: `about:config` -> `security.enterprise_roots.enabled` -> true

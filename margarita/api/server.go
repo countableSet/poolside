@@ -11,7 +11,8 @@ import (
 
 var configs = readFromFile()
 
-func RunApiServer() {
+// RunAPIServer starts up the http listener for the static content and api
+func RunAPIServer() {
 	ConfigUpdateChan <- configs
 	http.Handle("/", http.FileServer(http.Dir("./public")))
 	http.HandleFunc("/api/configurations", func(w http.ResponseWriter, r *http.Request) {

@@ -7,23 +7,28 @@ import (
 	"os"
 )
 
+// Configuration structure for storing proxy information
 type Configuration struct {
 	Domain string `json:"domain"`
 	Proxy  string `json:"proxy"`
 }
 
-var ConfigUpdateChan = make(chan []Configuration)
+var (
+	// ConfigUpdateChan channel to listener for configuratin updates
+	ConfigUpdateChan = make(chan []Configuration)
+	configPath       = os.Getenv("CONFIG_PATH") + "/config.json"
+)
 
 func writeToFile(c *[]Configuration) {
 	j, _ := json.Marshal(c)
-	_ = ioutil.WriteFile("config.json", j, 0644)
+	_ = ioutil.WriteFile(configPath, j, 0644)
 }
 
 func readFromFile() []Configuration {
 	var c []Configuration
-	f, err := os.Open("config.json")
+	f, err := os.Open(configPath)
 	if err != nil {
-		log.Printf("Error opening configuration file %v", err)
+		log.Printf("Using empty configuration, error with file: %v", err)
 		return []Configuration{}
 	}
 	defer f.Close()

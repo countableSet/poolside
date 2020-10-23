@@ -27,7 +27,7 @@ func main() {
 	cb := &testv3.Callbacks{Debug: true}
 	srv := serverv3.NewServer(ctx, snapshotCache, cb)
 
-	go api.RunApiServer()
+	go api.RunAPIServer()
 	go server.RunManagementServer(ctx, srv, port)
 	go server.ListenForConfigurationChanges(snapshotCache)
 

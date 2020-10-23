@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -11,12 +12,12 @@ import (
 func Load() {
 	setDefaults()
 
-	viper.SetConfigName("config")
+	viper.SetConfigName("overrides")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/app/")
+	viper.AddConfigPath(os.Getenv("CONFIG_PATH"))
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Printf("no config file found, using default values")
+			log.Printf("no overrides file found, using default values")
 		} else {
 			panic(fmt.Errorf("fatal error config file: %s", err))
 		}
@@ -35,6 +36,7 @@ func setDefaults() {
 		"xds.port":    uint32(10020),
 		"xds.cluster": "xds_cluster",
 	}
+	log.Printf("Defaults: %v", configMap)
 	for key, value := range configMap {
 		viper.SetDefault(key, value)
 	}

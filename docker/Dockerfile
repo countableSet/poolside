@@ -4,6 +4,8 @@ FROM poolside/margarita as margarita
 ####
 FROM ubuntu:20.04
 
+ENV CONFIG_PATH=/xds/config
+
 RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get install -y ca-certificates \
@@ -18,12 +20,11 @@ COPY --from=envoy /usr/local/bin/envoy /usr/local/bin/envoy
 COPY --from=envoy /usr/local/bin/su-exec /usr/local/bin/su-exec
 COPY --from=envoy /docker-entrypoint.sh /docker-entrypoint.sh
 
-RUN mkdir -p /xds
+RUN mkdir -p /xds/{config,public}
 COPY --from=margarita /app/app /xds/app
 COPY --from=margarita /app/public/* /xds/public/
 
 COPY start.sh /
 COPY envoy.yaml /etc/envoy/envoy.yaml
-COPY config.json /xds/config.json
 
 CMD ["./start.sh"]

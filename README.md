@@ -11,7 +11,7 @@ docker run -d \
 	--name=poolside \
 	--network=poolside-network \
 	-v $HOME/.poolside/certs/:/etc/envoy/certs/ \
-	-v $HOME/.poolside/config.json:/xds/config.json \
+	-v $HOME/.poolside/config/:/xds/config/ \
 	-p 443:8443 \
 	-p 9901:9901 \
 	-p 10010:10010 \
@@ -42,4 +42,4 @@ Safari/Chrome:
 Firefox: 
 
 - Go to `about:preferences#privacy` -> View Certificates -> Authorities -> Import -> myCA.pem file (Press `Cmd + Shift + .` to show hidden files)
-- Use keychain certificates: `about:config` -> `security.enterprise_roots.enabled` -> true
+- After doing the Safari/Chrome setup, to use keychain certificates: `about:config` -> `security.enterprise_roots.enabled` -> true

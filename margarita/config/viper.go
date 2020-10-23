@@ -25,12 +25,12 @@ func Load() {
 
 func setDefaults() {
 	var configMap = map[string]interface{}{
-		"envoy.port": uint32(443),
+		"envoy.port": uint32(8443),
 		"envoy.host": "0.0.0.0",
 
 		"margarita.domain": "margarita.poolside.dev",
-		"margarita.host": "0.0.0.0",
-		"margarita.port": uint32(10010),
+		"margarita.host":   "0.0.0.0",
+		"margarita.port":   uint32(10010),
 
 		"xds.port":    uint32(10020),
 		"xds.cluster": "xds_cluster",
@@ -47,7 +47,7 @@ func GetEnvoyHost() string {
 }
 
 // GetEnvoyPort the port number envoy should listen on to receive requests from the outside
-// Default to 443 for https connections
+// Default to 8443 for https connections
 func GetEnvoyPort() uint32 {
 	return viper.GetUint32("envoy.port")
 }

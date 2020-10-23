@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/countableset/poolside/margarita/api"
 	"log"
 	url2 "net/url"
 	"strconv"
@@ -10,31 +9,32 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/countableset/poolside/margarita/api"
 	"github.com/countableset/poolside/margarita/config"
 
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	listener "github.com/envoyproxy/go-control-plane/envoy/api/v2/listener"
-	route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	matcher "github.com/envoyproxy/go-control-plane/envoy/type/matcher"
-	cache "github.com/envoyproxy/go-control-plane/pkg/cache/types"
-	v2cache "github.com/envoyproxy/go-control-plane/pkg/cache/v2"
-
-	hcm "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
-
-	"github.com/envoyproxy/go-control-plane/pkg/resource/v2"
-	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/ptypes"
+
+	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	hcm "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
+	auth "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
+	matcher "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 )
 
 var (
-	version  int32
-	tlsName  = "poolside.dev"
+	version int32
+	tlsName = "poolside.dev"
 )
 
 // ListenForConfigurationChanges listens and applies changes to cache
-func ListenForConfigurationChanges(cache v2cache.SnapshotCache) {
+func ListenForConfigurationChanges(cache cache.SnapshotCache) {
 	for configs := range api.ConfigUpdateChan {
 		configs = append(configs, api.Configuration{
 			Domain: config.GetMargaritaDomain(),
@@ -46,12 +46,12 @@ func ListenForConfigurationChanges(cache v2cache.SnapshotCache) {
 }
 
 // CreateNewSnapShot data used for xDS service
-func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
+func CreateNewSnapShot(configs []api.Configuration) cache.Snapshot {
 	size := len(configs)
-	clusters := make([]cache.Resource, size)
+	clusters := make([]types.Resource, size)
 	routes := make([]*route.VirtualHost, size)
-	route := make([]cache.Resource, 1)
-	listeners := make([]cache.Resource, 1)
+	route := make([]types.Resource, 1)
+	listeners := make([]types.Resource, 1)
 
 	for i, c := range configs {
 		if !strings.Contains(c.Proxy, "://") {
@@ -80,11 +80,11 @@ func CreateNewSnapShot(configs []api.Configuration) v2cache.Snapshot {
 	routeName := "route_rds"
 	route[0] = makeRoute(routeName, routes)
 	listeners[0] = makeListener(listenerName, routeName)
+	secret := makeSecret(tlsName)
 
 	atomic.AddInt32(&version, 1)
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating snapshot Version %s", fmt.Sprint(version))
-	out := v2cache.NewSnapshot(fmt.Sprint(version), nil, clusters, route, listeners, nil)
-	out.Resources[cache.Secret] = v2cache.NewResources(fmt.Sprint(version), makeSecret(tlsName))
+	out := cache.NewSnapshot(fmt.Sprint(version), []types.Resource{}, clusters, route, listeners, []types.Resource{}, secret)
 	return out
 }
 
@@ -106,7 +106,7 @@ func xdsSource() *core.ConfigSource {
 	return source
 }
 
-func makeCluster(clusterName, hostname string, port uint32) *v2.Cluster {
+func makeCluster(clusterName, hostname string, port uint32) *cluster.Cluster {
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating cluster %v with %s and %d", clusterName, hostname, port)
 	// address config
 	h := &core.Address{Address: &core.Address_SocketAddress{
@@ -119,13 +119,28 @@ func makeCluster(clusterName, hostname string, port uint32) *v2.Cluster {
 		},
 	}}
 	// cluster
-	return &v2.Cluster{
+	return &cluster.Cluster{
 		Name:                 clusterName,
 		ConnectTimeout:       ptypes.DurationProto(5 * time.Second),
-		ClusterDiscoveryType: &v2.Cluster_Type{Type: v2.Cluster_LOGICAL_DNS},
-		DnsLookupFamily:      v2.Cluster_V4_ONLY,
-		LbPolicy:             v2.Cluster_ROUND_ROBIN,
-		Hosts:                []*core.Address{h}, // TODO need to fix deprecation warning
+		ClusterDiscoveryType: &cluster.Cluster_Type{Type: cluster.Cluster_LOGICAL_DNS},
+		DnsLookupFamily:      cluster.Cluster_V4_ONLY,
+		LbPolicy:             cluster.Cluster_ROUND_ROBIN,
+		LoadAssignment:       makeEndpoint(clusterName, h),
+	}
+}
+
+func makeEndpoint(clusterName string, addr *core.Address) *endpoint.ClusterLoadAssignment {
+	return &endpoint.ClusterLoadAssignment{
+		ClusterName: clusterName,
+		Endpoints: []*endpoint.LocalityLbEndpoints{{
+			LbEndpoints: []*endpoint.LbEndpoint{{
+				HostIdentifier: &endpoint.LbEndpoint_Endpoint{
+					Endpoint: &endpoint.Endpoint{
+						Address: addr,
+					},
+				},
+			}},
+		}},
 	}
 }
 
@@ -151,15 +166,15 @@ func makeVHostRoute(routeName, clusterName, domain string) *route.VirtualHost {
 	}
 }
 
-func makeRoute(routeName string, vhosts []*route.VirtualHost) *v2.RouteConfiguration {
+func makeRoute(routeName string, vhosts []*route.VirtualHost) *route.RouteConfiguration {
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating route %s", routeName)
-	return &v2.RouteConfiguration{
-		Name: routeName,
+	return &route.RouteConfiguration{
+		Name:         routeName,
 		VirtualHosts: vhosts,
 	}
 }
 
-func makeListener(listenerName string, route string) *v2.Listener {
+func makeListener(listenerName string, route string) *listener.Listener {
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating listener %s %s", listenerName, route)
 	rdsSource := xdsSource()
 	// HTTP filter configuration
@@ -197,7 +212,7 @@ func makeListener(listenerName string, route string) *v2.Listener {
 	}
 	mt, _ := ptypes.MarshalAny(tlsc)
 	// listener
-	return &v2.Listener{
+	return &listener.Listener{
 		Name: listenerName,
 		Address: &core.Address{
 			Address: &core.Address_SocketAddress{
@@ -227,9 +242,9 @@ func makeListener(listenerName string, route string) *v2.Listener {
 	}
 }
 
-func makeSecret(tlsName string) []cache.Resource {
+func makeSecret(tlsName string) []types.Resource {
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating secret")
-	return []cache.Resource{
+	return []types.Resource{
 		&auth.Secret{
 			Name: tlsName,
 			Type: &auth.Secret_TlsCertificate{

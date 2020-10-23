@@ -18,12 +18,12 @@ network:
 	docker network create --driver=bridge poolside-network
 
 run:
-	docker run \
+	docker run --rm \
 	--name=poolside \
 	--network=poolside-network \
 	-v $${HOME}/.poolside/certs/:/etc/envoy/certs/ \
 	-v $${HOME}/.poolside/config.json:/xds/config.json \
-	-p 443:443 \
+	-p 443:8443 \
 	-p 9901:9901 \
 	-p 10010:10010 \
 	ghcr.io/countableset/poolside:latest

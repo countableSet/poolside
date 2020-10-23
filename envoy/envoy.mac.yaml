@@ -9,14 +9,18 @@ node:
 
 dynamic_resources:
   lds_config:
+    resource_api_version: V3
     api_config_source:
       api_type: GRPC
+      transport_api_version: V3
       grpc_services:
         - envoy_grpc:
             cluster_name: xds_cluster
   cds_config:
+    resource_api_version: V3
     api_config_source:
       api_type: GRPC
+      transport_api_version: V3
       grpc_services:
         - envoy_grpc:
             cluster_name: xds_cluster
@@ -24,7 +28,7 @@ dynamic_resources:
 static_resources:
   clusters:
   - name: xds_cluster
-    connect_timeout: 0.25s
+    connect_timeout: 1s
     type: LOGICAL_DNS
     lb_policy: ROUND_ROBIN
     http2_protocol_options: {}

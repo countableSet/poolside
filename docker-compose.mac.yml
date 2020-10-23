@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   envoy:
-    image: envoyproxy/envoy:v1.14-latest
+    image: envoyproxy/envoy:v1.16-latest
     restart: always
     #command: ./docker-entrypoint.sh envoy -l debug -c /etc/envoy/envoy.yaml
     volumes:
@@ -11,5 +11,5 @@ services:
       - ./envoy/certs/domain.key:/etc/envoy/certs/key.pem
       - ./envoy/certs/myCA.pem:/etc/envoy/certs/ca.pem
     ports:
-      - "443:443" # entry
+      - "443:8443" # entry
       - "9901:9901" # admin

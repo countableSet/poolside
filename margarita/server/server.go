@@ -8,15 +8,20 @@ import (
 
 	"google.golang.org/grpc"
 
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
-	xds "github.com/envoyproxy/go-control-plane/pkg/server/v2"
+	clusterservice "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
+	discoverygrpc "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	endpointservice "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
+	listenerservice "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
+	routeservice "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
+	runtimeservice "github.com/envoyproxy/go-control-plane/envoy/service/runtime/v3"
+	secretservice "github.com/envoyproxy/go-control-plane/envoy/service/secret/v3"
+	serverv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
 )
 
 const grpcMaxConcurrentStreams = 1000000
 
 // RunManagementServer starts an xDS server at the given port.
-func RunManagementServer(ctx context.Context, server xds.Server, port uint32) {
+func RunManagementServer(ctx context.Context, srv3 serverv3.Server, port uint32) {
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions, grpc.MaxConcurrentStreams(grpcMaxConcurrentStreams))
 	grpcServer := grpc.NewServer(grpcOptions...)
@@ -26,13 +31,7 @@ func RunManagementServer(ctx context.Context, server xds.Server, port uint32) {
 		log.Printf("failed to listen %s", err)
 	}
 
-	// register services
-	discovery.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
-	discovery.RegisterSecretDiscoveryServiceServer(grpcServer, server)
-	v2.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
-	v2.RegisterClusterDiscoveryServiceServer(grpcServer, server)
-	v2.RegisterRouteDiscoveryServiceServer(grpcServer, server)
-	v2.RegisterListenerDiscoveryServiceServer(grpcServer, server)
+	registerServer(grpcServer, srv3)
 
 	log.Printf("management server listening %d", port)
 	go func() {
@@ -43,4 +42,15 @@ func RunManagementServer(ctx context.Context, server xds.Server, port uint32) {
 	<-ctx.Done()
 
 	grpcServer.GracefulStop()
+}
+
+func registerServer(grpcServer *grpc.Server, server serverv3.Server) {
+	// register services
+	discoverygrpc.RegisterAggregatedDiscoveryServiceServer(grpcServer, server)
+	endpointservice.RegisterEndpointDiscoveryServiceServer(grpcServer, server)
+	clusterservice.RegisterClusterDiscoveryServiceServer(grpcServer, server)
+	routeservice.RegisterRouteDiscoveryServiceServer(grpcServer, server)
+	listenerservice.RegisterListenerDiscoveryServiceServer(grpcServer, server)
+	secretservice.RegisterSecretDiscoveryServiceServer(grpcServer, server)
+	runtimeservice.RegisterRuntimeDiscoveryServiceServer(grpcServer, server)
 }

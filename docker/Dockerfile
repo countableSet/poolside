@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:v1.14-latest as envoy
+FROM envoyproxy/envoy:v1.16-latest as envoy
 ####
 FROM poolside/margarita as margarita
 ####
@@ -12,8 +12,10 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/* \
     && rm -rf /var/lib/apt/lists/*
 
+RUN adduser --group --system envoy
 RUN mkdir -p /etc/envoy/certs
 COPY --from=envoy /usr/local/bin/envoy /usr/local/bin/envoy
+COPY --from=envoy /usr/local/bin/su-exec /usr/local/bin/su-exec
 COPY --from=envoy /docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN mkdir -p /xds

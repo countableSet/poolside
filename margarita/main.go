@@ -2,19 +2,18 @@ package main
 
 import (
 	"context"
-	"github.com/countableset/poolside/margarita/api"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/countableset/poolside/margarita/api"
 	"github.com/countableset/poolside/margarita/config"
-
-	"github.com/countableset/poolside/margarita/callbacks"
 	"github.com/countableset/poolside/margarita/server"
 
-	"github.com/envoyproxy/go-control-plane/pkg/cache/v2"
-	xds "github.com/envoyproxy/go-control-plane/pkg/server/v2"
+	cachev3 "github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	serverv3 "github.com/envoyproxy/go-control-plane/pkg/server/v3"
+	testv3 "github.com/envoyproxy/go-control-plane/pkg/test/v3"
 )
 
 func main() {
@@ -23,10 +22,10 @@ func main() {
 	config.Load()
 
 	port := config.GetXdsPort()
-	cb, _ := callbacks.NewCallbacks()
 	ctx := context.Background()
-	snapshotCache := cache.NewSnapshotCache(false, cache.IDHash{}, nil)
-	srv := xds.NewServer(ctx, snapshotCache, cb)
+	snapshotCache := cachev3.NewSnapshotCache(false, cachev3.IDHash{}, nil)
+	cb := &testv3.Callbacks{Debug: true}
+	srv := serverv3.NewServer(ctx, snapshotCache, cb)
 
 	go api.RunApiServer()
 	go server.RunManagementServer(ctx, srv, port)

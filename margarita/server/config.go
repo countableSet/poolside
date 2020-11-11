@@ -41,7 +41,7 @@ func ListenForConfigurationChanges(cache cache.SnapshotCache) {
 			Proxy:  fmt.Sprintf("http://%s:%d", config.GetMargaritaHost(), config.GetMargaritaPort()),
 		})
 		snap := CreateNewSnapShot(configs)
-		cache.SetSnapshot("id_1", snap)
+		_ = cache.SetSnapshot("id_1", snap)
 	}
 }
 
@@ -49,8 +49,8 @@ func ListenForConfigurationChanges(cache cache.SnapshotCache) {
 func CreateNewSnapShot(configs []api.Configuration) cache.Snapshot {
 	size := len(configs)
 	clusters := make([]types.Resource, size)
-	routes := make([]*route.VirtualHost, size)
-	route := make([]types.Resource, 1)
+	routeVHosts := make([]*route.VirtualHost, size)
+	routes := make([]types.Resource, 1)
 	listeners := make([]types.Resource, 1)
 
 	for i, c := range configs {
@@ -74,17 +74,17 @@ func CreateNewSnapShot(configs []api.Configuration) cache.Snapshot {
 		routeName := "route_" + slug
 
 		clusters[i] = makeCluster(clusterName, remoteHost, uint32(port))
-		routes[i] = makeVHostRoute(routeName, clusterName, domain)
+		routeVHosts[i] = makeVHostRoute(routeName, clusterName, domain)
 	}
 	listenerName := "listener_https"
 	routeName := "route_rds"
-	route[0] = makeRoute(routeName, routes)
+	routes[0] = makeRoute(routeName, routeVHosts)
 	listeners[0] = makeListener(listenerName, routeName)
 	secret := makeSecret(tlsName)
 
 	atomic.AddInt32(&version, 1)
 	log.Printf(">>>>>>>>>>>>>>>>>>> creating snapshot Version %s", fmt.Sprint(version))
-	out := cache.NewSnapshot(fmt.Sprint(version), []types.Resource{}, clusters, route, listeners, []types.Resource{}, secret)
+	out := cache.NewSnapshot(fmt.Sprint(version), []types.Resource{}, clusters, routes, listeners, []types.Resource{}, secret)
 	return out
 }
 
